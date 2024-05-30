@@ -14,14 +14,9 @@ def extract_columns(file_paths, columns):
     return extracted_data
 
 def format_output(extracted_data, columns):
-    # Find the maximum length of each column's values for proper formatting
     column_widths = {column: max(len(column), max((len(value) for value in values), default=0)) for column, values in extracted_data.items()}
-    
-    # Prepare headers
     headers = " | ".join(f"{column.center(column_widths[column])}" for column in columns)
     divider = "-" * len(headers)
-    
-    # Prepare rows
     rows = []
     for i in range(len(next(iter(extracted_data.values())))):
         row = " | ".join(f"{extracted_data[column][i].ljust(column_widths[column])}" for column in columns)
