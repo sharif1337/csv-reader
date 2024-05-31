@@ -8,24 +8,23 @@ def extract_columns(file_paths, columns):
             reader = csv.DictReader(file)
             for row in reader:
                 for column in columns:
-                    value = row.get(column)
-                    if value:
-                        extracted_data[column].append(value)
+                    value = row.get(column, "")
+                    extracted_data[column].append(value)
     return extracted_data
 
 def format_output(extracted_data, columns):
-    # Find the maximum length of each column's values for proper formatting
     column_widths = {column: max(len(column), max((len(value) for value in values), default=0)) for column, values in extracted_data.items()}
-    
-    # Prepare headers
     headers = " | ".join(f"{column.center(column_widths[column])}" for column in columns)
-    divider = "-" * len(headers)
-    
-    # Prepare rows
+
     rows = []
-    for i in range(len(next(iter(extracted_data.values())))):
-        row = " | ".join(f"{extracted_data[column][i].ljust(column_widths[column])}" for column in columns)
+    num_rows = max(len(values) for values in extracted_data.values())
+    for i in range(num_rows):
+        row = " | ".join(f"{(extracted_data[column][i] if i < len(extracted_data[column]) else '').ljust(column_widths[column])}" for column in columns)
         rows.append(row)
+    
+    # Calculate
+    divider_length = sum(column_widths[column] for column in columns) + (len(columns) - 1) * 3 + 4
+    divider = "-" * divider_length
     
     return divider, headers, divider, rows
 
@@ -47,18 +46,21 @@ def main():
         print("Columns present in the selected files:")
         print("\n".join(unique_columns))
     else:
+        if not args.columns:
+            print("Please specify columns to extract using the -c or --columns option.")
+            return
+
         extracted_data = extract_columns(args.files, args.columns)
         
         divider, headers, divider, rows = format_output(extracted_data, args.columns)
         
-        output_lines = [divider, "|" + headers, divider] + [" " + row for row in rows]
+        output_lines = [divider, "| " + headers + " |", divider] + ["| " + row + " |" for row in rows]
 
         if args.output:
             with open(args.output, 'w', encoding='utf-8') as output_file:
-                output_file.write("\n".join(output_lines) + "\n")
-                print("\n".join(output_lines))
-        else:
-            print("\n".join(output_lines))
+                output_file.write("\n".join(output_lines) + "\n" + divider)
+        print("\n".join(output_lines))
+        print (divider)
 
 if __name__ == "__main__":
     main()
